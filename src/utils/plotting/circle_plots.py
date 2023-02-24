@@ -58,9 +58,9 @@ def plot_forwardpass(plotting_data: PlottingData, output_path: Path) -> None:
         output_path (Path): Path where the plots will be saved.
     """
     # forward pass on training data interval
-    sin_train_in, cos_train_in = plotting_data.autoencoder_train['inputs']
-    sin_train_out, cos_train_out = plotting_data.autoencoder_train['outputs']
-    latent_train = plotting_data.inputs_train_generated_from    # only needed for scatter plots
+    sin_train_in, cos_train_in = plotting_data.get_data('ae', 'train', 'in')
+    sin_train_out, cos_train_out = plotting_data.get_data('ae', 'train', 'out')
+    latent_train = plotting_data.get_data(None, 'train', None)    # only needed for scatter plots
 
     latent_min, latent_max = round(latent_train.min(), 3), round(latent_train.max(), 3)
     latent_interval_train_str = f'[{latent_min}, {latent_max}]'
@@ -133,7 +133,7 @@ def plot_forwardpass(plotting_data: PlottingData, output_path: Path) -> None:
     ax2.set_ylabel('AE(x) [0] ' + r'$\approx$' + ' sin(x)')
 
     # latent representation
-    latent = plotting_data.encoder_train['outputs'][0]
+    latent = plotting_data.get_data('enc', 'train', 'out')[0]
     ax3 = plt.subplot(335, sharex=ax1)
     ax3.plot(latent_train, latent)
     ax3.set_title(f'Latent representation')
@@ -186,7 +186,7 @@ def plot_forwardpass(plotting_data: PlottingData, output_path: Path) -> None:
     ax2.set_title(f'Approx. of sin(x) (output 1)')   
     
     # latent representation
-    latent = plotting_data.encoder_train['outputs'][0]
+    latent = plotting_data.get_data('enc', 'train', 'out')[0]
     with (output_path / 'mep.pkl').open('rb') as f:
         mep = pickle.load(f)
     theta = mep['theta'].flatten()
@@ -238,7 +238,7 @@ def plot_forwardpass(plotting_data: PlottingData, output_path: Path) -> None:
     ax1.scatter(sin_train_in, cos_train_in, s=1)
 
     # latent representation
-    latent = plotting_data.encoder_train['outputs'][0]
+    latent = plotting_data.get_data('enc', 'train', 'out')[0]
     with (output_path / 'mep.pkl').open('rb') as f:
         mep = pickle.load(f)
     theta = mep['theta'].flatten()
@@ -276,7 +276,7 @@ def plot_forwardpass(plotting_data: PlottingData, output_path: Path) -> None:
     ax1.scatter(sin_train_in, cos_train_in, s=1)
 
     # latent representation
-    latent = plotting_data.encoder_train['outputs'][0]
+    latent = plotting_data.get_data('enc', 'train', 'out')[0]
     with (output_path / 'mep.pkl').open('rb') as f:
         mep = pickle.load(f)
     theta = mep['theta'].flatten()
@@ -403,8 +403,8 @@ def plots_input_domain(plotting_data: PlottingData, output_path: Path) -> None:
     """
     # TODO: also plot input1 and input 2 (sin/cos) (separate plots) -> three more in total
 
-    train_from_latent = plotting_data.inputs_train_generated_from
-    train_inputs = plotting_data.encoder_train['inputs']
+    train_from_latent = plotting_data.get_data(None, 'train', None)
+    train_inputs = plotting_data.get_data('enc', 'train', 'in')
     latent_min, latent_max = round(train_from_latent.min(), 3), round(train_from_latent.max(), 3)
     latent_interval_train_str = f'[{latent_min}, {latent_max}]'
     latent_interval_circle_str = '[-' + r'$\pi$' + ',' + r'$\pi$'+ ']'
@@ -426,8 +426,8 @@ def plots_input_domain(plotting_data: PlottingData, output_path: Path) -> None:
     plt.close()
 
     # plots for entire circle
-    circle_from_latent = plotting_data.inputs_all_generated_from
-    circle_inputs = plotting_data.encoder_all['inputs']
+    circle_from_latent = plotting_data.get_data(None, 'all', None)
+    circle_inputs = plotting_data.get_data('enc', 'all', 'in')
     fig = plt.figure(figsize=(10, 6))
 
     ax1 = plt.subplot(121)
@@ -484,13 +484,13 @@ def plots_encoder(plotting_data: PlottingData, output_path: Path) -> None:
 
     """
     # plots for training data
-    train_from_latent = plotting_data.inputs_train_generated_from
+    train_from_latent = plotting_data.get_data(None, 'train', None)
     latent_min, latent_max = round(train_from_latent.min(), 3), round(train_from_latent.max(), 3)
     latent_interval_train_str = f'[{latent_min}, {latent_max}]'
     latent_interval_circle_str = '[-' + r'$\pi$' + ',' + r'$\pi$'+ ']'
 
-    train_inputs = plotting_data.encoder_train['inputs']
-    train_latent_space_repr = plotting_data.encoder_train['outputs'][0] # latent dimension of 1
+    train_inputs = plotting_data.get_data('enc', 'train', 'in')
+    train_latent_space_repr = plotting_data.get_data('enc', 'train', 'out')[0] # latent dimension of 1
 
     fig = plt.figure(figsize=(10, 6))
 
@@ -530,9 +530,9 @@ def plots_encoder(plotting_data: PlottingData, output_path: Path) -> None:
     plt.close()
 
     # plots for entire circle
-    circle_from_latent = plotting_data.inputs_all_generated_from
-    circle_inputs = plotting_data.encoder_all['inputs']
-    circle_latent_space_repr = plotting_data.encoder_all['outputs'][0] # latent dimension of 1
+    circle_from_latent = plotting_data.get_data(None, 'all', None)
+    circle_inputs = plotting_data.get_data('enc', 'all', 'in')
+    circle_latent_space_repr = plotting_data.get_data('enc', 'all', 'out')[0] # latent dimension of 1
 
     fig = plt.figure(figsize=(10, 6))
 
@@ -606,12 +606,12 @@ def plots_decoder(plotting_data: PlottingData, output_path: Path) -> None:
         output_path (Path): Path where the plots will be saved.
     """
     # interpolate on training interval (latent space)
-    latent_train = plotting_data.decoder_train['inputs'][0] # 1D latent space
+    latent_train = plotting_data.get_data('dec', 'train', 'in')[0] # 1D latent space
     latent_min, latent_max = round(latent_train.min(), 3), round(latent_train.max(), 3)
     latent_interval_train_str = f'[{latent_min}, {latent_max}]'
     latent_interval_circle_str = '[-' + r'$\pi$' + ',' + r'$\pi$'+ ']'
 
-    outputs_train = plotting_data.decoder_train['outputs']  # 2D interpolated latent space
+    outputs_train = plotting_data.get_data('dec', 'train', 'out') # 2D interpolated latent space
     fig = plt.figure(figsize=(15, 6))
 
     ax1 = plt.subplot(131) 
@@ -638,8 +638,8 @@ def plots_decoder(plotting_data: PlottingData, output_path: Path) -> None:
     plt.close()
     
     # interpolate on entire interval (latent space used for entire circle construction)
-    latent_circle = plotting_data.decoder_all['inputs'][0] # 1D latent space
-    outputs_circle = plotting_data.decoder_all['outputs']  # 2D interpolated latent space
+    latent_circle = plotting_data.get_data('dec', 'all', 'in')[0] # 1D latent space
+    outputs_circle = plotting_data.get_data('dec', 'all', 'out')  # 2D interpolated latent space
 
     fig = plt.figure(figsize=(15, 6))
 
@@ -734,12 +734,12 @@ def comparison_latentspace(output_path: Path, runs: List[int]) -> None:
         # load plotting data
         with (output_path / rel_path_data.format(run)).open('rb') as f:
             d = pickle.load(f)
-            x_values = d.inputs_train_generated_from
-            latent_repr = d.encoder_train['outputs'][0]
+            x_values = d.get_data(None, 'train', None)
+            latent_repr = d.get_data('enc', 'train', 'out')[0]
             data_train_interval.append((x_values, latent_repr))
 
-            x_values = d.inputs_all_generated_from
-            latent_repr = d.encoder_all['outputs'][0]
+            x_values = d.get_data(None, 'all', None)
+            latent_repr = d.get_data('enc', 'all', 'out')[0]
             data_circle_interval.append((x_values, latent_repr))
         # load parameters for mathemaical equality problem
         with (output_path / rel_path_mep.format(run)).open('rb') as f:

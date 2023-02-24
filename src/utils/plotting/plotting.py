@@ -46,14 +46,83 @@ class PlottingData:
     
     Note: This can be probably also used for any type of data, not just for a circle.
     """
-    inputs_all_generated_from: ArrayLike
-    inputs_train_generated_from: ArrayLike
-    encoder_all: Dict[str, List[ArrayLike]]
-    encoder_train: Dict[str, List[ArrayLike]]
-    decoder_all: Dict[str, List[ArrayLike]]
-    decoder_train: Dict[str, List[ArrayLike]]
-    autoencoder_all: Dict[str, List[ArrayLike]]
-    autoencoder_train: Dict[str, List[ArrayLike]]
+    _inputs_all_generated_from: ArrayLike
+    _inputs_train_generated_from: ArrayLike
+    _encoder_all: Dict[str, List[ArrayLike]]
+    _encoder_train: Dict[str, List[ArrayLike]]
+    _decoder_all: Dict[str, List[ArrayLike]]
+    _decoder_train: Dict[str, List[ArrayLike]]
+    _autoencoder_all: Dict[str, List[ArrayLike]]
+    _autoencoder_train: Dict[str, List[ArrayLike]]
+
+
+    def get_data(self, model: str, interval: str, in_out: str):
+
+        interval = interval.lower()
+        if model is None:
+            if interval == 'train':
+                return self.inputs_train_generated_from
+            elif interval == 'all':
+                return self.inputs_all_generated_from
+
+        model = model.lower()
+        in_out = in_out.lower()
+
+        assert model in ['enc', 'dec', 'ae'], f'Unkown model, only enc/dec/ae allowed, not {model}'
+        assert interval in ['train', 'all'], f'Unkown interval, only train/all allowed, not {interval}'
+        assert in_out in ['in', 'out'], f'Only in/out allowed, not {in_out}'
+
+        data = None
+        if model == 'enc':
+            if interval == 'train':
+                data = self.encoder_train
+            else:
+                data = self.encoder_all
+        elif model == 'dec':
+            if interval == 'train':
+                data = self.decoder_train
+            else:
+                data = self.decoder_all
+        elif model == 'ae':
+            if interval == 'train':
+                data = self.autoencoder_train
+            else:
+                data = self.autoencoder_all
+
+        in_out = 'inputs' if in_out == 'in' else 'outputs'
+        return data[in_out]
+
+    @property
+    def inputs_all_generated_from(self):
+        return self._inputs_all_generated_from
+
+    @property
+    def inputs_train_generated_from(self):
+        return self._inputs_train_generated_from
+
+    @property
+    def encoder_all(self):
+        return self._encoder_all
+
+    @property
+    def encoder_train(self):
+        return self._encoder_train
+
+    @property
+    def decoder_all(self):
+        return self._decoder_all
+
+    @property
+    def decoder_train(self):
+        return self._decoder_train
+
+    @property
+    def autoencoder_all(self):
+        return self._autoencoder_all
+
+    @property
+    def autoencoder_train(self):
+        return self._autoencoder_train
 
     @staticmethod
     def format_as_field(inputs: List[ArrayLike], outputs: List[ArrayLike]) -> Dict[str, List[ArrayLike]]:

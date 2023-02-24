@@ -7,7 +7,7 @@ from numpy import pi
 
 # local libraries
 from models.base_models.AutoencoderBase import AutoencoderBase as AE
-from utils.plotting.plotting import PlottingData
+from utils.plotting.plotting import PlottingData, InOutData, ConsolidatedData, ManifoldData
 from utils.plotting.circle_plots import *
 
 
@@ -57,22 +57,20 @@ class EllipseMLP(AE):
         ae_output_1_all, ae_output_2_all = ae_output[:, 0], ae_output[:, 1]
 
         # create data structure that will be saved
-        encoder_all = PlottingData.format_as_field(inputs=[enc_input_1_all, enc_input_2_all], outputs=[encoded_all])
-        encoder_train = PlottingData.format_as_field(inputs=[enc_input_1, enc_input_2], outputs=[encoded])
-        decoder_all = PlottingData.format_as_field(inputs=[latent_all], outputs=[dec_output_1_all, dec_output_2_all])
-        decoder_train = PlottingData.format_as_field(inputs=[latent_train], outputs=[dec_output_1, dec_output_2])
-        autoencoder_all = PlottingData.format_as_field(
-            inputs=[enc_input_1_all, enc_input_2_all], outputs=[ae_output_1_all, ae_output_2_all])
-        autoencoder_train = PlottingData.format_as_field(
-            inputs=[enc_input_1, enc_input_2], outputs=[ae_output_1, ae_output_2])
+        enc_train = InOutData(input=[enc_input_1, enc_input_2], output=[encoded])
+        enc_all = InOutData(input=[enc_input_1_all, enc_input_2_all], output=[encoded_all])
+        dec_train = InOutData(input=[latent_train], output=[dec_output_1, dec_output_2])
+        dec_all = InOutData(input=[latent_all], output=[dec_output_1_all, dec_output_2_all])
+        ae_train = InOutData(
+            input=[enc_input_1, enc_input_2], output=[ae_output_1, ae_output_2])
+        ae_all = InOutData(
+            input=[enc_input_1_all, enc_input_2_all], output=[ae_output_1_all, ae_output_2_all])
         
-        plotting_data = PlottingData(
-            latent_all, latent_train,
-            encoder_all, encoder_train,
-            decoder_all, decoder_train,
-            autoencoder_all, autoencoder_train)
-        return plotting_data    # TODO: save permantly in create_plots-fcunction?
-
+        data_mf = ManifoldData(latent_train, latent_all)
+        data_enc = ConsolidatedData(enc_train, enc_all)
+        data_dec = ConsolidatedData(dec_train, dec_all)
+        data_ae = ConsolidatedData(ae_train, ae_all)
+        return PlottingData(data_mf, data_enc, data_dec, data_ae)
 
     def create_plots(self) -> None:
         output_path_plots = self.output_path / 'figures'

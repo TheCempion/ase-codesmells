@@ -14,13 +14,31 @@ from utils.paths import add_suffix, get_safe_filename
 
 
 __all__ = [
+    'ConsolidatedData',
+    'InOutData',
     'PlottingData',
     'save_figure',
     'scatter',
-    # 'add_2dscatter',
-    # 'plot_2d',
-    # 'plot_3d',
 ]
+
+
+@dataclass(frozen=True)
+class InOutData:
+    input: List[ArrayLike]
+    output: List[ArrayLike] = None
+
+
+@dataclass(frozen=True)
+class ConsolidatedData:
+    train: InOutData
+    all: InOutData = None
+
+@dataclass(frozen=True)
+class ManifoldData:
+    """Data that is assumed to be the underlying manifold and which was used to generate the training data.
+    """
+    train: ArrayLike
+    all: ArrayLike = None
 
 
 @dataclass(frozen=True)
@@ -29,42 +47,20 @@ class PlottingData:
     will be stored in pickle-file which then can later be easiliy read and plotted
 
     Args:
-        inputs_all_generated_from (AraryLike): Entire interval of the latent space from which the circle
-                generated.
-    	inputs_train_generated_from (ArrayLike): Interval of latent space, used to create section of circle that is
-                used as training data.
-        encoder_all (Dict[str, List[ArrayLike]]): Entire circle created from `inputs_all_generated_from` (input for
-                encoder).
-        encoder_train (Dict[str, List[ArrayLike]]): Training data for AE to learn latent representation for section of
-                circle. Generated from `inputs_train_generated_from` (input for encoder)
-        decoder_all (Dict[str, List[ArrayLike]]): Latent representation of entire interval that can be used to
-                interpolate the latent space (input for decoder).
-        decoder_train (Dict[str, List[ArrayLike]]): Latent representation used to interpolate LS on which the AE was
-                                trained (input for decoder)
-        autoencoder_train (Dict[str, List[ArrayLike]]): Forward pass with data from training interval
-        autoencoder_all (Dict[str, List[ArrayLike]]): Forward pass with data from entire interval
+        _data_manifold (ManifoldData): Underlying manifold, that was used to generate the data
+        _data_enc (ConsolidatedData): Input data and output of an encoder
+        _data_dec (ConsolidatedData): Input data and output of a decoder
+        _data_ae (ConsolidatedData): Forward pass with data from training interval
     
     Note: This can be probably also used for any type of data, not just for a circle.
     """
-    _inputs_all_generated_from: ArrayLike
-    _inputs_train_generated_from: ArrayLike
-    _encoder_all: Dict[str, List[ArrayLike]]
-    _encoder_train: Dict[str, List[ArrayLike]]
-    _decoder_all: Dict[str, List[ArrayLike]]
-    _decoder_train: Dict[str, List[ArrayLike]]
-    _autoencoder_all: Dict[str, List[ArrayLike]]
-    _autoencoder_train: Dict[str, List[ArrayLike]]
+    _data_manifold: ManifoldData
+    _data_enc: ConsolidatedData
+    _data_dec: ConsolidatedData
+    _data_ae: ConsolidatedData
 
-
-    def get_data(self, model: str, interval: str, in_out: str):
-
+    def get_data(self, model: str, interval: str, in_out: str) -> List[ArrayLike]:
         interval = interval.lower()
-        if model is None:
-            if interval == 'train':
-                return self.inputs_train_generated_from
-            elif interval == 'all':
-                return self.inputs_all_generated_from
-
         model = model.lower()
         in_out = in_out.lower()
 
@@ -72,74 +68,14 @@ class PlottingData:
         assert interval in ['train', 'all'], f'Unkown interval, only train/all allowed, not {interval}'
         assert in_out in ['in', 'out'], f'Only in/out allowed, not {in_out}'
 
-        data = None
-        if model == 'enc':
-            if interval == 'train':
-                data = self.encoder_train
-            else:
-                data = self.encoder_all
-        elif model == 'dec':
-            if interval == 'train':
-                data = self.decoder_train
-            else:
-                data = self.decoder_all
-        elif model == 'ae':
-            if interval == 'train':
-                data = self.autoencoder_train
-            else:
-                data = self.autoencoder_all
-
-        in_out = 'inputs' if in_out == 'in' else 'outputs'
-        return data[in_out]
-
-    @property
-    def inputs_all_generated_from(self):
-        return self._inputs_all_generated_from
-
-    @property
-    def inputs_train_generated_from(self):
-        return self._inputs_train_generated_from
-
-    @property
-    def encoder_all(self):
-        return self._encoder_all
-
-    @property
-    def encoder_train(self):
-        return self._encoder_train
-
-    @property
-    def decoder_all(self):
-        return self._decoder_all
-
-    @property
-    def decoder_train(self):
-        return self._decoder_train
-
-    @property
-    def autoencoder_all(self):
-        return self._autoencoder_all
-
-    @property
-    def autoencoder_train(self):
-        return self._autoencoder_train
-
-    @staticmethod
-    def format_as_field(inputs: List[ArrayLike], outputs: List[ArrayLike]) -> Dict[str, List[ArrayLike]]:
-        """Formats an vector of input(vectors) and ouput(vectors) into a dictionary, s.t. it can 
-
-        Args:
-            inputs (List[ArrayLike]): For each input
-            outputs (List[ArrayLike]): _description_
-
-        Returns:
-            Dict[str, List[ArrayLike]]: _description_
-        """
-        formatted = {
-            'inputs': inputs,
-            'outputs': outputs
-        }
-        return formatted
+        data = self._data_enc if model == 'enc' else (self._data_dec if model == 'dec' else self._data_ae)
+        data = data.train if interval == 'train' else data.all
+        return data.input if in_out == 'in' else data.output
+    
+    def get_manifold_data(self, interval: str) -> ArrayLike:
+        interval = interval.lower()
+        assert interval in ['train', 'all']
+        return self._data_manifold.train if interval == 'train' else self._data_manifold.all
 
 
 def scatter(ax: Axes, x1: ArrayLike, x2: ArrayLike, c: ArrayLike, x_lim: Tuple[float, float] = None,

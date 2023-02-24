@@ -60,7 +60,7 @@ def plot_forwardpass(plotting_data: PlottingData, output_path: Path) -> None:
     # forward pass on training data interval
     sin_train_in, cos_train_in = plotting_data.get_data('ae', 'train', 'in')
     sin_train_out, cos_train_out = plotting_data.get_data('ae', 'train', 'out')
-    latent_train = plotting_data.get_data(None, 'train', None)    # only needed for scatter plots
+    latent_train = plotting_data.get_manifold_data('train')    # only needed for scatter plots
 
     latent_min, latent_max = round(latent_train.min(), 3), round(latent_train.max(), 3)
     latent_interval_train_str = f'[{latent_min}, {latent_max}]'
@@ -403,7 +403,7 @@ def plots_input_domain(plotting_data: PlottingData, output_path: Path) -> None:
     """
     # TODO: also plot input1 and input 2 (sin/cos) (separate plots) -> three more in total
 
-    train_from_latent = plotting_data.get_data(None, 'train', None)
+    train_from_latent = plotting_data.get_manifold_data('train')
     train_inputs = plotting_data.get_data('enc', 'train', 'in')
     latent_min, latent_max = round(train_from_latent.min(), 3), round(train_from_latent.max(), 3)
     latent_interval_train_str = f'[{latent_min}, {latent_max}]'
@@ -426,7 +426,7 @@ def plots_input_domain(plotting_data: PlottingData, output_path: Path) -> None:
     plt.close()
 
     # plots for entire circle
-    circle_from_latent = plotting_data.get_data(None, 'all', None)
+    circle_from_latent = plotting_data.get_manifold_data('all')
     circle_inputs = plotting_data.get_data('enc', 'all', 'in')
     fig = plt.figure(figsize=(10, 6))
 
@@ -484,7 +484,7 @@ def plots_encoder(plotting_data: PlottingData, output_path: Path) -> None:
 
     """
     # plots for training data
-    train_from_latent = plotting_data.get_data(None, 'train', None)
+    train_from_latent = plotting_data.get_manifold_data('train')
     latent_min, latent_max = round(train_from_latent.min(), 3), round(train_from_latent.max(), 3)
     latent_interval_train_str = f'[{latent_min}, {latent_max}]'
     latent_interval_circle_str = '[-' + r'$\pi$' + ',' + r'$\pi$'+ ']'
@@ -530,7 +530,7 @@ def plots_encoder(plotting_data: PlottingData, output_path: Path) -> None:
     plt.close()
 
     # plots for entire circle
-    circle_from_latent = plotting_data.get_data(None, 'all', None)
+    circle_from_latent = plotting_data.get_manifold_data('all')
     circle_inputs = plotting_data.get_data('enc', 'all', 'in')
     circle_latent_space_repr = plotting_data.get_data('enc', 'all', 'out')[0] # latent dimension of 1
 
@@ -734,11 +734,11 @@ def comparison_latentspace(output_path: Path, runs: List[int]) -> None:
         # load plotting data
         with (output_path / rel_path_data.format(run)).open('rb') as f:
             d = pickle.load(f)
-            x_values = d.get_data(None, 'train', None)
+            x_values = d.get_manifold_data('train')
             latent_repr = d.get_data('enc', 'train', 'out')[0]
             data_train_interval.append((x_values, latent_repr))
 
-            x_values = d.get_data(None, 'all', None)
+            x_values = d.get_manifold_data('all')
             latent_repr = d.get_data('enc', 'all', 'out')[0]
             data_circle_interval.append((x_values, latent_repr))
         # load parameters for mathemaical equality problem

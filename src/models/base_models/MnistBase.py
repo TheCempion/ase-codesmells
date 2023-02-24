@@ -11,6 +11,8 @@ from configs.data_config import DataConfig
 from configs.model_config import ModelConfig
 from configs.training_config import TrainingConfig
 from utils.paths import get_safe_filename
+from utils.DataGenerator import ImageData
+
 
 
 __all__ = [
@@ -18,19 +20,40 @@ __all__ = [
     'MnistMLP',
 ]
 
-
 class MnistBase(AE):
     def __init__(
         self,
         model_config: ModelConfig,
         train_config: TrainingConfig,
-        data: DataConfig,
         output_path: str,
-        model_name: str
+        model_name: str,
+        noise: float,
+        dataset: str
         ) -> None:
+        data = self._get_dataset(noise, dataset)
         super().__init__(
             model_config, train_config, data, output_path, model_name
         )
+
+    def __del__(self) -> None:
+        self.save_config()
+        self.plot_model()
+        self.save_training_history()
+        self.plot_latent_space()
+
+    def _get_dataset(noise: float, dataset: str) -> DataConfig:
+        data_generator = ImageData()
+        if dataset.lower() == 'mlp':
+            data = data_generator.MNIST_mlp(noise)
+        elif dataset.lower() == 'cnn':
+            data = data_generator.MNIST_cnn(noise)
+        elif dataset.lower() == 'mlp-fashion':
+            data = data_generator.fashion_MNIST_mlp(noise)
+        elif dataset.lower() == 'cnn-fashion':
+            data = data_generator.fashion_MNIST_cnn(noise)
+        else:
+            raise ValueError(f'Unknown dataset: {dataset}')
+        return data
 
     def plot_latent_space(self) -> None:
         axis = self.scatter_latent_space()

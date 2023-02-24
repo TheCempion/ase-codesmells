@@ -75,12 +75,12 @@ class EllipseMLP(AE):
 
 
     def create_plots(self) -> None:
-        self.output_path_plots = self.output_path / 'figures'
-        self.output_path_plots.mkdir(parents=True)
-        self.plotting_data = self.preprocess()
-        with (self.output_path_plots / 'plotting_data.pkl').open('wb') as f:
-            pickle.dump(self.plotting_data, f)
-        plots_input_domain(self.plotting_data, self.output_path_plots)
-        plots_encoder(self.plotting_data, self.output_path_plots)
-        plots_decoder(self.plotting_data, self.output_path_plots)
-        plot_forwardpass(self.plotting_data, self.output_path_plots)  # NOTE: MUST be called AFTER plots_encoder()
+        output_path_plots = self.output_path / 'figures'
+        output_path_plots.mkdir(parents=True)
+        plotting_data = self.preprocess()
+        with (output_path_plots / 'plotting_data.pkl').open('wb') as f:
+            pickle.dump(plotting_data, f)
+        plots_input_domain(plotting_data, output_path_plots)
+        plots_encoder(plotting_data, output_path_plots)
+        plots_decoder(plotting_data, output_path_plots)
+        plot_forwardpass(plotting_data, output_path_plots) # NOTE: MUST be called AFTER plots_encoder()
